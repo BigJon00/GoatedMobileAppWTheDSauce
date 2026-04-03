@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, Button } from "react-native";
+import { StyleSheet, Text, View, Button, FlatList, TouchableOpacity } from "react-native";
 import React, { useEffect, useRef } from "react";
 import MapView, { Marker, Callout } from "react-native-maps";
 import { useLocalSearchParams } from "expo-router";
@@ -70,6 +70,16 @@ const Search = () => {
     }
   }, [latitude, longitude]);
 
+  // navigation event
+  const zoomToEvent = (event: Event) => {
+    mapRef.current?.animateToRegion({
+      latitude: event.latitude,
+      longitude: event.longitude,
+      latitudeDelta: 0.01,
+      longitudeDelta: 0.01,
+    });
+  };
+
   return (
     <View style={styles.container}>
       <MapView
@@ -101,9 +111,25 @@ const Search = () => {
         ))}
       </MapView>
 
-      <View style={styles.buttonContainer}>
+      {/* FlatList of events; can tap to zoom */}
+      <FlatList
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        data={events}
+        style={styles.list}
+        contentContainerStyle={styles.listContent}
+        keyExtractor={(item) => item.id.toString()}
+        renderItem={({ item }) => (
+          <TouchableOpacity style={styles.listItem} onPress={() => zoomToEvent(item)}>
+            <Text style={styles.listTitle} numberOfLines={1}>{item.name}</Text>
+            <Text style={styles.listDesc} numberOfLines={2}>{item.description}</Text>
+          </TouchableOpacity>
+        )}
+      />
+
+      {/*<View style={styles.buttonContainer}>
         <Button title="Fit All Events" onPress={fitAllEvents} />
-      </View>
+      </View>*/}
     </View>
   );
 };
@@ -116,8 +142,7 @@ const styles = StyleSheet.create({
   },
 
   map: {
-    width: "100%",
-    height: "100%",
+    ...StyleSheet.absoluteFillObject,
   },
 
   callout: {
@@ -142,6 +167,40 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     paddingHorizontal: 10,
     paddingVertical: 5,
-    
+  },
+
+  list: {
+    position: "absolute",
+    bottom: 20,
+    width: "100%",
+  },
+
+  listContent: {
+    paddingHorizontal: 10,
+  },
+
+  listItem: {
+    backgroundColor: "white",
+    padding: 15,
+    marginHorizontal: 10,
+    borderRadius: 15,
+    width: 250,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+
+  listTitle: {
+    fontWeight: "bold",
+    fontSize: 16,
+    marginBottom: 5,
+    color: "#660000",
+  },
+
+  listDesc: {
+    fontSize: 12,
+    color: "#333",
   },
 });
