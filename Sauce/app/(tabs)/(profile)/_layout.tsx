@@ -10,6 +10,7 @@ const _layout = () => {
       }}>
       <Stack.Screen name="index" options={{ title: 'Home' }} />
       <Stack.Screen name="settings" options={{ title: 'Settings' }} />
+      <Stack.Screen name="bookmark" options={{ title: 'Bookmarks' }} />
     </Stack>
   )
 }

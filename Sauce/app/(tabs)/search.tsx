@@ -63,11 +63,13 @@ const Search = () => {
   const longitude = Number(lng);
 
   //AsyncStorage data getting intialized
+  //Loads saved favorite
   useEffect(() => {
     initializeLocations();
     loadFavorites();
   }, []);
 
+  // Pretty much check if favortie
   const isFavorite = (id: string) => {
     return favorites.some(f => f.id === id);
   };
@@ -78,17 +80,19 @@ const Search = () => {
     setLocations(defaultLocations);
   };
 
+  // 
   const loadFavorites = async () => {
     const favs = await getFavorites();
     setFavorites(favs);
   };
 
+  // Add if not favorited and vice versa
   const handleToggleFavorite = async (location: Location) => {
     const updated = await toggleFavorite(location);
     setFavorites(updated);
   };
 
-  /* KEEP THIS
+  /* NOT NEEDED AS OF RIGHT NOW
   const initializeLocations = async () => {
     const stored = await getLocations();
 
@@ -99,9 +103,8 @@ const Search = () => {
       setLocations(stored);
     }
   };
-  */
+  
 
- /* NOT NEEDED AS OF RIGHT NOW
   const fitAllLocations = () => {
     if (mapRef.current && locations.length > 0) {
       mapRef.current.fitToCoordinates(

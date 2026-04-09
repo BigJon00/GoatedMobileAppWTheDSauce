@@ -7,7 +7,6 @@ export default function Home() {
 
   return (
     <View style={styles.container}>
-    {/* Header Row */}
     <View style={styles.headerRow}>
       <Text style={styles.headText}>Welcome, User!</Text>
 
