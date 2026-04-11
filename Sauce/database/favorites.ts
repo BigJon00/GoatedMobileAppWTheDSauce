@@ -3,7 +3,7 @@ import { FAVORITES_KEY } from "@/constants/keys";
 import { Location } from "@/interfaces/interfaces";
 
 // Getting Favorites
-export const getFavorites = async(): Promise<Location[]> => {
+export const getFavorites = async (): Promise<Location[]> => {
     const data = await AsyncStorage.getItem(FAVORITES_KEY);
     return data ? JSON.parse(data) : [];
 };
@@ -22,23 +22,11 @@ export const toggleFavorite = async (location: Location) => {
     let updated;
 
     if (exist) {
-     updated = favorites.filter(f => f.id !== location.id);
+        updated = favorites.filter(f => f.id !== location.id);
     } else {
-     updated = [...favorites, location];
+        updated = [...favorites, location];
     }
 
     await saveFavorites(updated)
     return updated;
 }
-
-
-
-
-
-
-
-
-
-
-
-
