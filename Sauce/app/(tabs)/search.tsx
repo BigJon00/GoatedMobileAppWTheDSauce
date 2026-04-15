@@ -3,15 +3,28 @@ import React, { useEffect, useRef, useState } from "react";
 import MapView, { Marker, Callout } from "react-native-maps";
 import { useLocalSearchParams, useRouter } from "expo-router";
 
+import { initDB } from "@/database/db";
+import {
+  insertLocation,
+  getAllLocations,
+  toggleFavoriteSQL
+} from "@/database/locationSQL";
+
+import { useFocusEffect } from "expo-router";
+import { useCallback } from "react";
+
 // Importing both functions from database
+
+/* NOT NEEDED FOR NOW
 import { getLocations, saveLocations } from "@/database/location";
 import { getFavorites, toggleFavorite } from "@/database/favorites";
+*/
 
 // Importing from interfaces
 import { Location } from "@/interfaces/interfaces";
 
 // Here is our hard coded locations
-const defaultLocations: Location[] = [
+export const defaultLocations: Location[] = [
   {
     id: "1",
     name: "Sabatino's NYC Pizza",
@@ -76,10 +89,16 @@ const Search = () => {
 
   //AsyncStorage data getting intialized
   //Loads saved favorite
-  useEffect(() => {
-    initializeLocations();
-    loadFavorites();
-  }, []);
+  useFocusEffect(() => {
+    const load = async () => {
+      const data = await getAllLocations();
+      setLocations(data);
+    };
+  
+    load();
+  
+    return () => {}; // required cleanup structure
+  });
 
   // Animate map when navigated to with params
   useEffect(() => {
@@ -93,12 +112,14 @@ const Search = () => {
     }
   }, [latitude, longitude]);
 
-  // Check if a location is favorited
-  const isFavorite = (id: string) => {
-    return favorites.some((f) => f.id === id);
+  // Returns if a location is favorited
+  // Updated pertaining to SQLite
+  const isFavorite = (location: any) => {
+    return location.isFavorite === 1;
   };
 
   // Load default locations into AsyncStorage and state
+  /* BOTH FUNCTIONS AREN'T NEEDED ANYMORE
   const initializeLocations = async () => {
     await saveLocations(defaultLocations);
     setLocations(defaultLocations);
@@ -109,11 +130,15 @@ const Search = () => {
     const favs = await getFavorites();
     setFavorites(favs);
   };
+  */
 
   // Toggle favorite and persist
-  const handleToggleFavorite = async (location: Location) => {
-    const updated = await toggleFavorite(location);
-    setFavorites(updated);
+  // Updated pertaining to SQLite
+  const handleToggleFavorite = async (location: any) => {
+    await toggleFavoriteSQL(location.id, location.isFavorite);
+  
+    const updated = await getAllLocations();
+    setLocations(updated);
   };
 
   // Zoom map to a location
@@ -181,7 +206,11 @@ const Search = () => {
     // Update state and persist to AsyncStorage
     const updated = [...locations, newLocation];
     setLocations(updated);
-    await saveLocations(updated);
+    //await saveLocations(updated);
+    await insertLocation(newLocation);
+
+    const updatedSQL = await getAllLocations();
+    setLocations(updatedSQL);
 
     // Close modal, reset form, and zoom to new pin
     setModalVisible(false);
@@ -209,7 +238,7 @@ const Search = () => {
               latitude: location.latitude,
               longitude: location.longitude,
             }}
-            pinColor={isFavorite(location.id) ? "gold" : "red"}
+            pinColor={isFavorite(location) ? "gold" : "red"}
             onPress={() => handleToggleFavorite(location)}
           >
             <Callout tooltip>
@@ -217,7 +246,7 @@ const Search = () => {
                 <Text style={styles.title}>{location.name}</Text>
                 <Text>{location.description}</Text>
                 <Text style={{ marginTop: 10, color: "blue" }}>
-                  {isFavorite(location.id) ? "★ Favorited" : "☆ Add Favorite"}
+                  {isFavorite(location) ? "★ Favorited" : "☆ Add Favorite"}
                 </Text>
               </View>
             </Callout>
