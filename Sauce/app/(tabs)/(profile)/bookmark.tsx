@@ -5,39 +5,79 @@ import React, { useEffect, useState } from 'react';
 import { getFavorites } from "@/database/favorites";
 import { Location } from "@/interfaces/interfaces";
 
+// Implmenting SQLite 
+import { getFavoritesSQL, toggleFavoriteSQL } from "@/database/locationSQL";
+import { useRouter } from 'expo-router';
+import { useFocusEffect } from 'expo-router';
+
+
 const Bookmark = () => {
   const [favorites, setFavorites] = useState<Location[]>([]);
+  
+  const Router = useRouter();
 
-  useEffect(() => {
+  // Favorties are now reloaded instead of a one time thing 
+  useFocusEffect(() => {
     loadFavorites();
-  }, []);
-
+  
+    return () => {}; // cleanup
+  });
+  
   // Loading the favorites to which gets placed in the flatList
+  // updated to getFavortiesSQL
   const loadFavorites = async () => {
-    const favs = await getFavorites();
+    const favs = await getFavoritesSQL();
     setFavorites(favs);
+  };
+
+  // New Feature: Remove favortites from bookmarks creen 
+  const handleRemoveFavorite = async (item: any) => {
+    await toggleFavoriteSQL(item.id, item.isFavorite);
+  
+    const updated = await getFavoritesSQL();
+    setFavorites(updated);
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Favorite Locations</Text>
+  <Text style={styles.header}>Favorite Locations</Text>
 
-      {/*Pretty much to show that there's no favorite you added. */}
-      {favorites.length === 0 ? (
-        <Text style={styles.empty}>No favorites yet</Text>
-      ) : (
-        <FlatList
-          data={favorites}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <View style={styles.card}>
-              <Text style={styles.title}>{item.name}</Text>
-              <Text style={styles.desc}>{item.description}</Text>
-            </View>
-          )}
-        />
+  {favorites.length === 0 ? (
+    <Text style={styles.empty}>No favorites yet</Text>
+  ) : (
+    <FlatList
+      data={favorites}
+      keyExtractor={(item) => item.id}
+      renderItem={({ item }) => (
+        <View style={styles.card}>
+
+          <TouchableOpacity
+            onPress={() =>
+              Router.push({
+                pathname: `/search`,
+                params: {
+                  lat: item.latitude.toString(),
+                  lng: item.longitude.toString(),
+                },
+              })
+            }
+          >
+            <Text style={styles.title}>{item.name}</Text>
+            <Text style={styles.desc}>{item.description}</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.removeBtn}
+            onPress={() => handleRemoveFavorite(item)}
+          >
+            <Text style={styles.removeText}>Remove</Text>
+          </TouchableOpacity>
+
+        </View>
       )}
-    </View>
+    />
+  )}
+</View>
   );
 };
 
@@ -76,4 +116,14 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#555",
   },
+
+  removeBtn: {
+    marginTop: 10,
+    alignSelf: "flex-end",
+  },
+
+  removeText: {
+    color: "red",
+    fontWeight: "bold",
+  }
 });
