@@ -3,47 +3,65 @@ import React, { useEffect, useState } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import MapView, { Marker } from "react-native-maps";
 import { getFavorites, toggleFavorite } from "@/database/favorites";
+import { getLocationById } from "@/database/location";
 import { Location } from "@/interfaces/interfaces";
 
 const LocationDetail = () => {
-  const { id, name, description, latitude, longitude } = useLocalSearchParams<{
-    id: string;
-    name: string;
-    description: string;
-    latitude: string;
-    longitude: string;
-  }>();
-
+  const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
 
-  const lat = parseFloat(latitude);
-  const lng = parseFloat(longitude);
-
-  // Favorite state
+  // State
+  const [location, setLocation] = useState<Location | null>(null);
   const [isFavorited, setIsFavorited] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  // Check if this location is already favorited on mount
   useEffect(() => {
-    checkFavorite();
-  }, []);
+    loadData();
+  }, [id]);
 
-  const checkFavorite = async () => {
-    const favs = await getFavorites();
-    setIsFavorited(favs.some((f) => f.id === id));
-  };
+  const loadData = async () => {
+    setIsLoading(true);
+    const [fetchedLocation, favs] = await Promise.all([
+      getLocationById(id),
+      getFavorites(),
+    ]);
 
-  const locationObj: Location = {
-    id,
-    name,
-    description,
-    latitude: lat,
-    longitude: lng,
+    if (fetchedLocation) {
+      setLocation(fetchedLocation);
+      setIsFavorited(favs.some((f) => f.id === id));
+    }
+    setIsLoading(false);
   };
 
   const handleFavoriteToggle = async () => {
-    await toggleFavorite(locationObj);
+    if (!location) return;
+    await toggleFavorite(location);
     setIsFavorited((prev) => !prev);
   };
+
+  if (isLoading) {
+    return (
+      <View style={[styles.container, styles.centered]}>
+        <Text>Loading restaurant details...</Text>
+      </View>
+    );
+  }
+
+  if (!location) {
+    return (
+      <View style={[styles.container, styles.centered]}>
+        <Text style={styles.errorTitle}>Location Not Found</Text>
+        <Text style={styles.errorText}>We couldn't find the restaurant you're looking for.</Text>
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <Text style={styles.backButtonText}>← Back to Map</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  const { name, description, latitude, longitude } = location;
+  const lat = latitude;
+  const lng = longitude;
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
@@ -117,6 +135,26 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#f5f5f5",
+  },
+
+  centered: {
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+
+  errorTitle: {
+    fontSize: 22,
+    fontWeight: "bold",
+    color: "#660000",
+    marginBottom: 8,
+  },
+
+  errorText: {
+    fontSize: 16,
+    color: "#666",
+    textAlign: "center",
+    marginBottom: 24,
   },
 
   content: {

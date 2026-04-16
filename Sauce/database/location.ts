@@ -1,23 +1,28 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LOCATIONS_KEY } from '@/constants/keys';
 
-// In this Function, we're simply getting all of the saved locations
+// Get locations
 export const getLocations = async () => {
-    try{
+    try {
         const data = await AsyncStorage.getItem(LOCATIONS_KEY)
-        return data ? JSON.parse(data) : []; 
-    } catch (e){
+        return data ? JSON.parse(data) : [];
+    } catch (e) {
         console.log("There was an issue with getting locations: ", e);
         return [];
     }
 }
 
-
-// This function will simply save locations
+// Save locations
 export const saveLocations = async (locations: any[]) => {
-    try{
+    try {
         await AsyncStorage.setItem(LOCATIONS_KEY, JSON.stringify(locations));
     } catch (e) {
         console.log("An error saving locations: ", e)
     }
+}
+
+// Get a single location by ID
+export const getLocationById = async (id: string) => {
+    const locations = await getLocations();
+    return locations.find((l: any) => l.id === id);
 }

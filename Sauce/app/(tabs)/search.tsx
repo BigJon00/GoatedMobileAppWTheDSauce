@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View, FlatList, TouchableOpacity, Modal, TextInput, KeyboardAvoidingView, Platform, Alert, } from "react-native";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import MapView, { Marker, Callout } from "react-native-maps";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter, useFocusEffect } from "expo-router";
 
 // Importing both functions from database
 import { getLocations, saveLocations } from "@/database/location";
@@ -81,6 +81,13 @@ const Search = () => {
     loadFavorites();
   }, []);
 
+  // Refresh favorites whenever the screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      loadFavorites();
+    }, [])
+  );
+
   // Animate map when navigated to with params
   useEffect(() => {
     if (!isNaN(latitude) && !isNaN(longitude) && mapRef.current) {
@@ -98,10 +105,33 @@ const Search = () => {
     return favorites.some((f) => f.id === id);
   };
 
-  // Load default locations into AsyncStorage and state
+  // Load locations from AsyncStorage, using defaults only if empty
+  // Made it so it will recreate markers for favorites with no markers
   const initializeLocations = async () => {
-    await saveLocations(defaultLocations);
-    setLocations(defaultLocations);
+    let saved = await getLocations();
+    const favs = await getFavorites();
+
+    // If completely empty, use defaults
+    if (!saved || saved.length === 0) {
+      saved = [...defaultLocations];
+    }
+
+    // If a restaurant is favorited but missing from the map, recreate it.
+    let recoveryMade = false;
+    for (const fav of favs) {
+      const existsOnMap = saved.some((loc) => loc.id === fav.id);
+      if (!existsOnMap) {
+        saved.push(fav);
+        recoveryMade = true;
+      }
+    }
+
+    // Persist changes if we recovered any data or if it was the first-time setup
+    if (recoveryMade || (await getLocations()).length === 0) {
+      await saveLocations(saved);
+    }
+
+    setLocations(saved);
   };
 
   // Load saved favorites from AsyncStorage
@@ -210,14 +240,16 @@ const Search = () => {
               longitude: location.longitude,
             }}
             pinColor={isFavorite(location.id) ? "gold" : "red"}
-            onPress={() => handleToggleFavorite(location)}
+            onCalloutPress={() => {
+              router.push(`/details/${location.id}` as any);
+            }}
           >
             <Callout tooltip>
               <View style={styles.callout}>
                 <Text style={styles.title}>{location.name}</Text>
                 <Text>{location.description}</Text>
-                <Text style={{ marginTop: 10, color: "blue" }}>
-                  {isFavorite(location.id) ? "★ Favorited" : "☆ Add Favorite"}
+                <Text style={{ marginTop: 10, color: "blue", fontWeight: '600' }}>
+                  View Details →
                 </Text>
               </View>
             </Callout>
@@ -247,15 +279,7 @@ const Search = () => {
             onPress={() => {
               // Zoom the map AND navigate to the dynamic detail route
               zoomToLocation(item);
-              router.push({
-                pathname: `/details/${item.id}` as any,
-                params: {
-                  name: item.name,
-                  description: item.description,
-                  latitude: item.latitude.toString(),
-                  longitude: item.longitude.toString(),
-                },
-              });
+              router.push(`/details/${item.id}` as any);
             }}
           >
             <Text style={styles.listTitle} numberOfLines={1}>
