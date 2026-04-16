@@ -6,6 +6,9 @@ import { getFavorites, toggleFavorite } from "@/database/favorites";
 import { getLocationById } from "@/database/location";
 import { Location } from "@/interfaces/interfaces";
 
+// For SQLite Implementation 
+import { getAllLocations, toggleFavoriteSQL } from "@/database/locationSQL";
+
 const LocationDetail = () => {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
