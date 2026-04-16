@@ -5,6 +5,9 @@ import MapView, { Marker } from "react-native-maps";
 import { getFavorites, toggleFavorite } from "@/database/favorites";
 import { Location } from "@/interfaces/interfaces";
 
+// For SQLite Implementation 
+import { getAllLocations, toggleFavoriteSQL } from "@/database/locationSQL";
+
 const LocationDetail = () => {
   const { id, name, description, latitude, longitude } = useLocalSearchParams<{
     id: string;
@@ -28,8 +31,9 @@ const LocationDetail = () => {
   }, []);
 
   const checkFavorite = async () => {
-    const favs = await getFavorites();
-    setIsFavorited(favs.some((f) => f.id === id));
+    const locations = await getAllLocations();
+    const found = locations.find((loc: any) => loc.id === id);
+    setIsFavorited(found?.isFavorite === 1);
   };
 
   const locationObj: Location = {
@@ -41,8 +45,12 @@ const LocationDetail = () => {
   };
 
   const handleFavoriteToggle = async () => {
-    await toggleFavorite(locationObj);
-    setIsFavorited((prev) => !prev);
+    await toggleFavoriteSQL(id, isFavorited ? 1 : 0);
+  
+    const locations = await getAllLocations();
+    const updated = locations.find((loc: any) => loc.id === id);
+  
+    setIsFavorited(updated?.isFavorite === 1);
   };
 
   return (
