@@ -10,15 +10,12 @@ import {
   toggleFavoriteSQL
 } from "@/database/locationSQL";
 
-import { useFocusEffect } from "expo-router";
-import { useCallback } from "react";
+
 
 // Importing both functions from database
-
-/* NOT NEEDED FOR NOW
 import { getLocations, saveLocations } from "@/database/location";
 import { getFavorites, toggleFavorite } from "@/database/favorites";
-*/
+
 
 // Importing from interfaces
 import { Location } from "@/interfaces/interfaces";
@@ -87,8 +84,6 @@ const Search = () => {
   const latitude = Number(lat);
   const longitude = Number(lng);
 
-  //AsyncStorage data getting intialized
-  //Loads saved favorite
   useFocusEffect(() => {
     const load = async () => {
       const data = await getAllLocations();
@@ -99,13 +94,6 @@ const Search = () => {
   
     return () => {}; // required cleanup structure
   });
-
-  // Refresh favorites whenever the screen comes into focus
-  useFocusEffect(
-    useCallback(() => {
-      loadFavorites();
-    }, [])
-  );
 
   // Animate map when navigated to with params
   useEffect(() => {
@@ -139,7 +127,7 @@ const Search = () => {
     // If a restaurant is favorited but missing from the map, recreate it.
     let recoveryMade = false;
     for (const fav of favs) {
-      const existsOnMap = saved.some((loc) => loc.id === fav.id);
+      const existsOnMap = saved.some((loc: Location) => loc.id === fav.id);
       if (!existsOnMap) {
         saved.push(fav);
         recoveryMade = true;
@@ -159,7 +147,7 @@ const Search = () => {
     const favs = await getFavorites();
     setFavorites(favs);
   };
-  */
+  
 
   // Toggle favorite and persist
   // Updated pertaining to SQLite
@@ -262,16 +250,19 @@ const Search = () => {
       >
         {locations.map((location) => (
           <Marker
-            key={location.id}
-            coordinate={{
-              latitude: location.latitude,
-              longitude: location.longitude,
-            }}
-            pinColor={isFavorite(location.id) ? "gold" : "red"}
-            onCalloutPress={() => {
-              router.push(`/details/${location.id}` as any);
-            }}
-          >
+          key={location.id}
+          coordinate={{
+            latitude: location.latitude,
+            longitude: location.longitude,
+          }}
+          pinColor={isFavorite(location) ? "gold" : "red"}
+          
+          onPress={() => handleToggleFavorite(location)} 
+          
+          onCalloutPress={() => {
+            router.push(`/details/${location.id}` as any);
+          }}
+        >
             <Callout tooltip>
               <View style={styles.callout}>
                 <Text style={styles.title}>{location.name}</Text>

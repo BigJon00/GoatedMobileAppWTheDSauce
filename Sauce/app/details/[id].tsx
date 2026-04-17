@@ -1,12 +1,10 @@
 import { StyleSheet, Text, View, TouchableOpacity, ScrollView } from "react-native";
 import React, { useEffect, useState } from "react";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter, useFocusEffect } from "expo-router";
 import MapView, { Marker } from "react-native-maps";
-import { getFavorites, toggleFavorite } from "@/database/favorites";
-import { getLocationById } from "@/database/location";
 import { Location } from "@/interfaces/interfaces";
 
-// For SQLite Implementation 
+// ONLY use SQLite
 import { getAllLocations, toggleFavoriteSQL } from "@/database/locationSQL";
 
 const LocationDetail = () => {
@@ -16,33 +14,43 @@ const LocationDetail = () => {
   // State
   const [location, setLocation] = useState<Location | null>(null);
   const [isFavorited, setIsFavorited] = useState<boolean>(false);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  useEffect(() => {
+  // Load data EVERY TIME screen is focused
+  useFocusEffect(() => {
     loadData();
-  }, [id]);
+    return () => {};
+  });
 
+  // Get location directly from SQLite
   const loadData = async () => {
-    setIsLoading(true);
-    const [fetchedLocation, favs] = await Promise.all([
-      getLocationById(id),
-      getFavorites(),
-    ]);
+    const allLocations = await getAllLocations();
 
-    if (fetchedLocation) {
-      setLocation(fetchedLocation);
-      setIsFavorited(favs.some((f) => f.id === id));
+    const found = allLocations.find((loc) => loc.id === id);
+
+    if (found) {
+      setLocation(found);
+      setIsFavorited(found.isFavorite === 1);
     }
-    setIsLoading(false);
   };
 
+  // Toggle favorite using SQLite
   const handleFavoriteToggle = async () => {
     if (!location) return;
-    await toggleFavorite(location);
-    setIsFavorited((prev) => !prev);
+
+    await toggleFavoriteSQL(location.id, location.isFavorite ?? 0);
+
+    // Reload fresh data so EVERYTHING stays in sync
+    const updated = await getAllLocations();
+    const updatedLocation = updated.find((loc) => loc.id === id);
+
+    if (updatedLocation) {
+      setLocation(updatedLocation);
+      setIsFavorited(updatedLocation.isFavorite === 1);
+    }
   };
 
-  if (isLoading) {
+  // Loading fallback
+  if (!location) {
     return (
       <View style={[styles.container, styles.centered]}>
         <Text>Loading restaurant details...</Text>
@@ -50,47 +58,31 @@ const LocationDetail = () => {
     );
   }
 
-  if (!location) {
-    return (
-      <View style={[styles.container, styles.centered]}>
-        <Text style={styles.errorTitle}>Location Not Found</Text>
-        <Text style={styles.errorText}>We couldn't find the restaurant you're looking for.</Text>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <Text style={styles.backButtonText}>← Back to Map</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
-
   const { name, description, latitude, longitude } = location;
-  const lat = latitude;
-  const lng = longitude;
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      {/* Mini Map Preview */}
+      
+      {/* Map Preview */}
       <View style={styles.mapContainer}>
         <MapView
           style={styles.map}
           initialRegion={{
-            latitude: lat,
-            longitude: lng,
+            latitude,
+            longitude,
             latitudeDelta: 0.01,
             longitudeDelta: 0.01,
           }}
           scrollEnabled={false}
-          zoomEnabled={false}
-          pitchEnabled={false}
-          rotateEnabled={false}
         >
           <Marker
-            coordinate={{ latitude: lat, longitude: lng }}
+            coordinate={{ latitude, longitude }}
             pinColor={isFavorited ? "gold" : "red"}
           />
         </MapView>
       </View>
 
-      {/* Location Info Card */}
+      {/* Info Card */}
       <View style={styles.card}>
         <Text style={styles.locationName}>{name}</Text>
 
@@ -105,11 +97,12 @@ const LocationDetail = () => {
         <View style={styles.coordRow}>
           <View style={styles.coordBadge}>
             <Text style={styles.coordLabel}>Latitude</Text>
-            <Text style={styles.coordValue}>{lat.toFixed(4)}</Text>
+            <Text style={styles.coordValue}>{latitude.toFixed(4)}</Text>
           </View>
+
           <View style={styles.coordBadge}>
             <Text style={styles.coordLabel}>Longitude</Text>
-            <Text style={styles.coordValue}>{lng.toFixed(4)}</Text>
+            <Text style={styles.coordValue}>{longitude.toFixed(4)}</Text>
           </View>
         </View>
       </View>
@@ -120,7 +113,7 @@ const LocationDetail = () => {
         onPress={handleFavoriteToggle}
       >
         <Text style={styles.favoriteButtonText}>
-          {isFavorited ? "★  Remove from Favorites" : "☆  Add to Favorites"}
+          {isFavorited ? "★ Remove from Favorites" : "☆ Add to Favorites"}
         </Text>
       </TouchableOpacity>
 
@@ -128,6 +121,7 @@ const LocationDetail = () => {
       <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
         <Text style={styles.backButtonText}>← Back to Map</Text>
       </TouchableOpacity>
+
     </ScrollView>
   );
 };
@@ -135,54 +129,21 @@ const LocationDetail = () => {
 export default LocationDetail;
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#f5f5f5",
-  },
+  container: { flex: 1, backgroundColor: "#f5f5f5" },
 
-  centered: {
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 20,
-  },
+  centered: { justifyContent: "center", alignItems: "center", padding: 20 },
 
-  errorTitle: {
-    fontSize: 22,
-    fontWeight: "bold",
-    color: "#660000",
-    marginBottom: 8,
-  },
+  content: { paddingBottom: 40 },
 
-  errorText: {
-    fontSize: 16,
-    color: "#666",
-    textAlign: "center",
-    marginBottom: 24,
-  },
+  mapContainer: { height: 220, width: "100%" },
 
-  content: {
-    paddingBottom: 40,
-  },
-
-  mapContainer: {
-    height: 220,
-    width: "100%",
-  },
-
-  map: {
-    flex: 1,
-  },
+  map: { flex: 1 },
 
   card: {
     backgroundColor: "#fff",
-    marginHorizontal: 16,
-    marginTop: 16,
+    margin: 16,
     borderRadius: 16,
     padding: 20,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
     elevation: 4,
   },
 
@@ -190,7 +151,6 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "bold",
     color: "#660000",
-    marginBottom: 12,
   },
 
   divider: {
@@ -203,15 +163,11 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: "700",
     color: "#999",
-    textTransform: "uppercase",
-    letterSpacing: 1,
-    marginBottom: 6,
   },
 
   description: {
     fontSize: 15,
     color: "#333",
-    lineHeight: 22,
   },
 
   coordRow: {
@@ -230,8 +186,6 @@ const styles = StyleSheet.create({
   coordLabel: {
     fontSize: 11,
     color: "#888",
-    fontWeight: "600",
-    marginBottom: 4,
   },
 
   coordValue: {
@@ -245,7 +199,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
     backgroundColor: "#660000",
     borderRadius: 12,
-    paddingVertical: 14,
+    padding: 14,
     alignItems: "center",
   },
 
@@ -256,13 +210,12 @@ const styles = StyleSheet.create({
   favoriteButtonText: {
     color: "#fff",
     fontWeight: "bold",
-    fontSize: 16,
   },
 
   backButton: {
     marginHorizontal: 16,
     marginTop: 12,
-    paddingVertical: 14,
+    padding: 14,
     alignItems: "center",
     borderWidth: 1.5,
     borderColor: "#660000",
@@ -272,6 +225,5 @@ const styles = StyleSheet.create({
   backButtonText: {
     color: "#660000",
     fontWeight: "600",
-    fontSize: 15,
   },
 });
