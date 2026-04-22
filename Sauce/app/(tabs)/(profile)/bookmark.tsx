@@ -10,14 +10,24 @@ import { getFavoritesSQL, toggleFavoriteSQL } from "@/database/locationSQL";
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from 'expo-router';
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 
 const Bookmark = () => {
   const [favorites, setFavorites] = useState<Location[]>([]);
+  const [theme, setTheme] = useState("white");
   
   const Router = useRouter();
 
   // Favorties are now reloaded instead of a one time thing 
   useFocusEffect(() => {
+    const loadTheme = async () => {
+      const saved = await AsyncStorage.getItem("theme");
+      if (saved) setTheme(saved);
+    };
+
+    loadTheme();
+
     loadFavorites();
   
     return () => {}; // cleanup
@@ -39,7 +49,7 @@ const Bookmark = () => {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme }]}>
   <Text style={styles.header}>Favorite Locations</Text>
 
   {favorites.length === 0 ? (

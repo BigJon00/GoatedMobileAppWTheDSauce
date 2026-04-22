@@ -1,6 +1,8 @@
 import { View, Text, Button, TouchableOpacity, StyleSheet, Image} from 'react-native'
 import { useRouter, useFocusEffect} from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
+import { useEffect } from 'react'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 
 // Imported locations in order to display them on this page through [id]
 import { defaultLocations } from '../search' 
@@ -9,7 +11,11 @@ import { useState } from 'react'
 
 
 export default function Home() {
-  const router = useRouter()
+  const router = useRouter();
+
+  const [theme, setTheme] = useState("white");
+
+
 
   // Needed for [ID] to display specific info
   const location = defaultLocations[0];
@@ -22,6 +28,12 @@ export default function Home() {
   Also using random as a way to change the location from the number of locations
    */
   useFocusEffect(() => {
+    const loadTheme = async () => {
+      const saved = await AsyncStorage.getItem("theme");
+      if (saved) setTheme(saved);
+    };
+
+    loadTheme();
     const randomIndex = Math.floor(Math.random() * defaultLocations.length);
 
     // State updated randomly selected location
@@ -32,7 +44,7 @@ export default function Home() {
   });
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme }]}>
     <View style={styles.headerRow}>
       <Text style={styles.headText}>Welcome, User!</Text>
 
