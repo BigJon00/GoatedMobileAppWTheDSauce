@@ -77,7 +77,7 @@ export default function Home() {
     </Text>
 
     <TouchableOpacity
-        style={styles.searchButton}
+        style={[styles.searchButton,  {backgroundColor: subColor}]}
         onPress={() => router.push("../search")}
       >
         <Text style={[styles.searchText,  { color: textColor }]}>Search</Text>

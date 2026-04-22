@@ -9,19 +9,29 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 
 const profile = () => {
     const router = useRouter()
-    const [theme, setTheme] = useState("white");
-    const [textColor, setTextColor] = useState("black");
 
-    useFocusEffect(() => {
+    const [theme, setTheme] = useState<string>("white");
+    const [textColor, setTextColor] = useState<string>("black");
+     const [subColor, setSubColor] = useState<string>("black");
+    
+  
+     useFocusEffect(() => {
       const themeLoad = async () => {
         const themeSaved = await AsyncStorage.getItem("theme");
         const textSaved = await AsyncStorage.getItem("textColor");
+        const subSaved = await AsyncStorage.getItem("subColor");
         if(themeSaved){
           setTheme(themeSaved)
         }
-        if(textSaved){
-          setTextColor(textSaved)
+  
+        if (textSaved) {
+          setTextColor(textSaved);
         }
+  
+        if (subSaved){
+          setSubColor(subSaved);
+        }
+  
       };
   
       themeLoad();
@@ -37,7 +47,7 @@ const profile = () => {
       </Text>
     
         <TouchableOpacity
-          style={styles.searchButton}
+          style={[styles.searchButton, {backgroundColor: subColor}]}
           onPress={() => router.push("../settings")}
           >
           <View style={styles.buttonContent}>
@@ -47,7 +57,7 @@ const profile = () => {
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={styles.searchButton}
+          style={[styles.searchButton,  {backgroundColor: subColor}]}
           onPress={() => router.push("../bookmark")}
         >
           <View style={styles.buttonContent}>
