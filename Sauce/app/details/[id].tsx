@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { useLocalSearchParams, useRouter, useFocusEffect } from "expo-router";
 import MapView, { Marker } from "react-native-maps";
 import { Location } from "@/interfaces/interfaces";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // ONLY use SQLite
 import { getAllLocations, toggleFavoriteSQL } from "@/database/locationSQL";
@@ -14,9 +15,16 @@ const LocationDetail = () => {
   // State
   const [location, setLocation] = useState<Location | null>(null);
   const [isFavorited, setIsFavorited] = useState<boolean>(false);
+  const [theme, setTheme] = useState("white");
 
   // Load data EVERY TIME screen is focused
   useFocusEffect(() => {
+    const loadTheme = async () => {
+      const saved = await AsyncStorage.getItem("theme");
+      if (saved) setTheme(saved);
+    };
+
+    loadTheme();
     loadData();
     return () => {};
   });
@@ -61,7 +69,10 @@ const LocationDetail = () => {
   const { name, description, latitude, longitude } = location;
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+     <View style={[styles.container, { backgroundColor: theme }]}>
+    <ScrollView style={styles.container} contentContainerStyle={styles.content} >
+    
+
       
       {/* Map Preview */}
       <View style={styles.mapContainer}>
@@ -123,13 +134,14 @@ const LocationDetail = () => {
       </TouchableOpacity>
 
     </ScrollView>
+    </View>
   );
 };
 
 export default LocationDetail;
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f5f5f5" },
+  container: { flex: 1 },
 
   centered: { justifyContent: "center", alignItems: "center", padding: 20 },
 
