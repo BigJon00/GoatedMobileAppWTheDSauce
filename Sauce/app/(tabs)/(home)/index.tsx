@@ -13,7 +13,10 @@ import { useState } from 'react'
 export default function Home() {
   const router = useRouter();
 
+  // For style purposes
   const [theme, setTheme] = useState("white");
+  const [textColor, setTextColor] = useState("black");
+  const [subColor, setSubColor] = useState<string>("black");
 
 
 
@@ -28,12 +31,25 @@ export default function Home() {
   Also using random as a way to change the location from the number of locations
    */
   useFocusEffect(() => {
-    const loadTheme = async () => {
-      const saved = await AsyncStorage.getItem("theme");
-      if (saved) setTheme(saved);
+    const themeLoad = async () => {
+      const themeSaved = await AsyncStorage.getItem("theme");
+      const textSaved = await AsyncStorage.getItem("textColor");
+      const subSaved = await AsyncStorage.getItem("subColor");
+      if(themeSaved){
+        setTheme(themeSaved)
+      }
+
+      if (textSaved) {
+        setTextColor(textSaved);
+      }
+
+      if (subSaved){
+        setSubColor(subSaved);
+      }
+
     };
 
-    loadTheme();
+    themeLoad();
     const randomIndex = Math.floor(Math.random() * defaultLocations.length);
 
     // State updated randomly selected location
@@ -46,7 +62,7 @@ export default function Home() {
   return (
     <View style={[styles.container, { backgroundColor: theme }]}>
     <View style={styles.headerRow}>
-      <Text style={styles.headText}>Welcome, User!</Text>
+      <Text style={[styles.headText,  { color: textColor }]}>Welcome, User!</Text>
 
       <TouchableOpacity
         onPress={() => router.push("../(home)/settings")}
@@ -56,7 +72,7 @@ export default function Home() {
       </TouchableOpacity>
     </View>
 
-    <Text style={styles.introText}>
+    <Text style={[styles.introText,  { color: textColor }]}>
       Discover local restaurant's in the Charleston Area!
     </Text>
 
@@ -64,16 +80,16 @@ export default function Home() {
         style={styles.searchButton}
         onPress={() => router.push("../search")}
       >
-        <Text style={styles.searchText}>Search</Text>
+        <Text style={[styles.searchText,  { color: textColor }]}>Search</Text>
       </TouchableOpacity>
 
-    <Text style={styles.locationText}> Random Restaurant </Text>
+    <Text style={[styles.locationText,  { color: textColor }]}> Random Restaurant </Text>
 
     
 
     {featuredLocation && (
     <TouchableOpacity
-      style={styles.card}
+      style={[styles.card, { backgroundColor: subColor }]}
       onPress={() =>
         router.push({
           pathname: "/details/[id]",
@@ -87,9 +103,14 @@ export default function Home() {
       })
     }
   >
-    <Text style={styles.cardTitle}>
+    <Text style={[styles.cardTitle,  { color: textColor }]}>
       {featuredLocation.name}
     </Text>
+      <Text style={[styles.listDesc, { color: textColor }]} numberOfLines={2}>
+            {featuredLocation.description}
+      </Text>
+    <Text style={[styles.listHint, {color: textColor}]}>Tap for details →</Text>
+             
   </TouchableOpacity>
 )}
 
@@ -175,6 +196,48 @@ image: {
   width: "100%",
   height: "100%",
   resizeMode: "cover",
+},
+
+list: {
+  position: "absolute",
+  bottom: 20,
+  width: "100%",
+},
+
+listContent: {
+  paddingHorizontal: 10,
+},
+
+listItem: {
+  backgroundColor: "white",
+  padding: 15,
+  marginHorizontal: 10,
+  borderRadius: 15,
+  width: 250,
+  shadowColor: "#000",
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.25,
+  shadowRadius: 3.84,
+  elevation: 5,
+},
+
+listTitle: {
+  fontWeight: "bold",
+  fontSize: 16,
+  marginBottom: 5,
+  color: "#660000",
+},
+
+listDesc: {
+  fontSize: 12,
+  color: "#333",
+},
+
+listHint: {
+  fontSize: 11,
+  color: "#bfa87c",
+  marginTop: 4,
+  fontWeight: "600",
 },
 
 });

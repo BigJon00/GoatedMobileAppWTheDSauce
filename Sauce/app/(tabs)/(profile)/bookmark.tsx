@@ -16,17 +16,32 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const Bookmark = () => {
   const [favorites, setFavorites] = useState<Location[]>([]);
   const [theme, setTheme] = useState("white");
+  const [textColor, setTextColor] = useState("black");
+  const [subColor, setSubColor] = useState<string>("black");
   
   const Router = useRouter();
 
   // Favorties are now reloaded instead of a one time thing 
   useFocusEffect(() => {
-    const loadTheme = async () => {
-      const saved = await AsyncStorage.getItem("theme");
-      if (saved) setTheme(saved);
+    const themeLoad = async () => {
+      const themeSaved = await AsyncStorage.getItem("theme");
+      const textSaved = await AsyncStorage.getItem("textColor");
+      const subSaved = await AsyncStorage.getItem("subColor");
+      if(themeSaved){
+        setTheme(themeSaved)
+      }
+
+      if (textSaved) {
+        setTextColor(textSaved);
+      }
+
+      if (subSaved){
+        setSubColor(subSaved);
+      }
+
     };
 
-    loadTheme();
+    themeLoad();
 
     loadFavorites();
   
@@ -50,16 +65,16 @@ const Bookmark = () => {
 
   return (
     <View style={[styles.container, { backgroundColor: theme }]}>
-  <Text style={styles.header}>Favorite Locations</Text>
+  <Text style={[styles.header, { color: textColor }]}>Favorite Locations</Text>
 
   {favorites.length === 0 ? (
-    <Text style={styles.empty}>No favorites yet</Text>
+    <Text style={[styles.empty, { color: textColor }]}>No favorites yet</Text>
   ) : (
     <FlatList
       data={favorites}
       keyExtractor={(item) => item.id}
       renderItem={({ item }) => (
-        <View style={styles.card}>
+        <View style={[styles.card, {backgroundColor: subColor}]}>
 
           <TouchableOpacity
             onPress={() =>
@@ -72,8 +87,8 @@ const Bookmark = () => {
               })
             }
           >
-            <Text style={styles.title}>{item.name}</Text>
-            <Text style={styles.desc}>{item.description}</Text>
+            <Text style={[styles.title, {color: textColor}]}>{item.name}</Text>
+            <Text style={[styles.desc, {color: textColor}]}>{item.description}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity

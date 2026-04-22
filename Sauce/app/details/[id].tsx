@@ -16,15 +16,30 @@ const LocationDetail = () => {
   const [location, setLocation] = useState<Location | null>(null);
   const [isFavorited, setIsFavorited] = useState<boolean>(false);
   const [theme, setTheme] = useState("white");
+  const [textColor, setTextColor] = useState("black");
+  const [subColor, setSubColor] = useState<string>("black");
 
   // Load data EVERY TIME screen is focused
   useFocusEffect(() => {
-    const loadTheme = async () => {
-      const saved = await AsyncStorage.getItem("theme");
-      if (saved) setTheme(saved);
+    const themeLoad = async () => {
+      const themeSaved = await AsyncStorage.getItem("theme");
+      const textSaved = await AsyncStorage.getItem("textColor");
+      const subSaved = await AsyncStorage.getItem("subColor");
+      if(themeSaved){
+        setTheme(themeSaved)
+      }
+
+      if (textSaved) {
+        setTextColor(textSaved);
+      }
+
+      if (subSaved){
+        setSubColor(subSaved);
+      }
+
     };
 
-    loadTheme();
+    themeLoad();
     loadData();
     return () => {};
   });
@@ -60,7 +75,7 @@ const LocationDetail = () => {
   // Loading fallback
   if (!location) {
     return (
-      <View style={[styles.container, styles.centered]}>
+      <View style={[styles.container, styles.centered,]}>
         <Text>Loading restaurant details...</Text>
       </View>
     );
@@ -94,26 +109,26 @@ const LocationDetail = () => {
       </View>
 
       {/* Info Card */}
-      <View style={styles.card}>
-        <Text style={styles.locationName}>{name}</Text>
+      <View style={[styles.card, { backgroundColor: subColor }]}>
+        <Text style={[styles.locationName,{ color: textColor }]}>{name}</Text>
 
         <View style={styles.divider} />
 
-        <Text style={styles.sectionLabel}>About</Text>
-        <Text style={styles.description}>{description}</Text>
+        <Text style={[styles.sectionLabel, { color: textColor }]}>About</Text>
+        <Text style={[styles.description, {color: textColor}]}>{description}</Text>
 
         <View style={styles.divider} />
 
-        <Text style={styles.sectionLabel}>Coordinates</Text>
+        <Text style={[styles.sectionLabel, { color: textColor }]}>Coordinates</Text>
         <View style={styles.coordRow}>
-          <View style={styles.coordBadge}>
-            <Text style={styles.coordLabel}>Latitude</Text>
-            <Text style={styles.coordValue}>{latitude.toFixed(4)}</Text>
+          <View style={[styles.coordBadge, {backgroundColor: theme}]}>
+            <Text style={[styles.coordLabel,{ color: textColor }]}>Latitude</Text>
+            <Text style={[styles.coordValue,{ color: textColor }]}>{latitude.toFixed(4)}</Text>
           </View>
 
-          <View style={styles.coordBadge}>
-            <Text style={styles.coordLabel}>Longitude</Text>
-            <Text style={styles.coordValue}>{longitude.toFixed(4)}</Text>
+          <View style={[styles.coordBadge, {backgroundColor: theme}]}>
+            <Text style={[styles.coordLabel,{ color: textColor }]}>Longitude</Text>
+            <Text style={[styles.coordValue, { color: textColor }]}>{longitude.toFixed(4)}</Text>
           </View>
         </View>
       </View>
@@ -123,14 +138,14 @@ const LocationDetail = () => {
         style={[styles.favoriteButton, isFavorited && styles.favoritedButton]}
         onPress={handleFavoriteToggle}
       >
-        <Text style={styles.favoriteButtonText}>
+        <Text style={[styles.favoriteButtonText, { color: textColor }]}>
           {isFavorited ? "★ Remove from Favorites" : "☆ Add to Favorites"}
         </Text>
       </TouchableOpacity>
 
       {/* Back Button */}
       <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-        <Text style={styles.backButtonText}>← Back to Map</Text>
+        <Text style={[styles.backButtonText, { color: textColor }]}>← Back to Map</Text>
       </TouchableOpacity>
 
     </ScrollView>

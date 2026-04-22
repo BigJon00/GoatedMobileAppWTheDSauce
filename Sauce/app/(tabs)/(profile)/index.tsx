@@ -10,12 +10,17 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 const profile = () => {
     const router = useRouter()
     const [theme, setTheme] = useState("white");
+    const [textColor, setTextColor] = useState("black");
 
     useFocusEffect(() => {
       const themeLoad = async () => {
         const themeSaved = await AsyncStorage.getItem("theme");
+        const textSaved = await AsyncStorage.getItem("textColor");
         if(themeSaved){
           setTheme(themeSaved)
+        }
+        if(textSaved){
+          setTextColor(textSaved)
         }
       };
   
@@ -27,7 +32,9 @@ const profile = () => {
   return (
     <View style={[styles.container, { backgroundColor: theme }]}>
        
-          <Text style={styles.headText}>Profile</Text>
+       <Text style={[styles.headText, { color: textColor }]}>
+        Profile
+      </Text>
     
         <TouchableOpacity
           style={styles.searchButton}
@@ -35,7 +42,7 @@ const profile = () => {
           >
           <View style={styles.buttonContent}>
             <Ionicons name="settings-outline" size={24} color="white" />
-            <Text style={styles.searchText}>Settings</Text>
+            <Text style={[styles.searchText, { color: textColor }]}>Settings</Text>
           </View>
         </TouchableOpacity>
 
@@ -45,7 +52,7 @@ const profile = () => {
         >
           <View style={styles.buttonContent}>
             <Ionicons name="bookmark-outline" size={24} color="white" />
-            <Text style={styles.searchText}>Bookmarks</Text>
+            <Text style={[styles.searchText, { color: textColor }]}>Bookmarks</Text>
           </View>
         </TouchableOpacity>
             
