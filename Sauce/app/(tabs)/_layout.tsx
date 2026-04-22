@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 
 
 const _layout = () => {
+  
     return (
         <Tabs
           screenOptions={{

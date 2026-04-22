@@ -9,14 +9,29 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 
 const profile = () => {
     const router = useRouter()
-    const [theme, setTheme] = useState("white");
 
-    useFocusEffect(() => {
+    const [theme, setTheme] = useState<string>("white");
+    const [textColor, setTextColor] = useState<string>("black");
+     const [subColor, setSubColor] = useState<string>("black");
+    
+  
+     useFocusEffect(() => {
       const themeLoad = async () => {
         const themeSaved = await AsyncStorage.getItem("theme");
+        const textSaved = await AsyncStorage.getItem("textColor");
+        const subSaved = await AsyncStorage.getItem("subColor");
         if(themeSaved){
           setTheme(themeSaved)
         }
+  
+        if (textSaved) {
+          setTextColor(textSaved);
+        }
+  
+        if (subSaved){
+          setSubColor(subSaved);
+        }
+  
       };
   
       themeLoad();
@@ -27,25 +42,27 @@ const profile = () => {
   return (
     <View style={[styles.container, { backgroundColor: theme }]}>
        
-          <Text style={styles.headText}>Profile</Text>
+       <Text style={[styles.headText, { color: textColor }]}>
+        Profile
+      </Text>
     
         <TouchableOpacity
-          style={styles.searchButton}
+          style={[styles.searchButton, {backgroundColor: subColor}]}
           onPress={() => router.push("../settings")}
           >
           <View style={styles.buttonContent}>
             <Ionicons name="settings-outline" size={24} color="white" />
-            <Text style={styles.searchText}>Settings</Text>
+            <Text style={[styles.searchText, { color: textColor }]}>Settings</Text>
           </View>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={styles.searchButton}
+          style={[styles.searchButton,  {backgroundColor: subColor}]}
           onPress={() => router.push("../bookmark")}
         >
           <View style={styles.buttonContent}>
             <Ionicons name="bookmark-outline" size={24} color="white" />
-            <Text style={styles.searchText}>Bookmarks</Text>
+            <Text style={[styles.searchText, { color: textColor }]}>Bookmarks</Text>
           </View>
         </TouchableOpacity>
             

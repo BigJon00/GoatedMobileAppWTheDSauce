@@ -16,6 +16,8 @@ import {
 import { getLocations, saveLocations } from "@/database/location";
 import { getFavorites, toggleFavorite } from "@/database/favorites";
 
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
 
 // Importing from interfaces
 import { Location } from "@/interfaces/interfaces";
@@ -62,6 +64,11 @@ export const defaultLocations: Location[] = [
 const Search = () => {
   const mapRef = useRef<MapView | null>(null);
 
+  // Needed for background styling
+  const [theme, setTheme] = useState("white");
+  const [textColor, setTextColor] = useState("black");
+  const [subColor, setSubColor] = useState<string>("black");
+
   // Existing state 
   const [locations, setLocations] = useState<Location[]>([]);
   const [favorites, setFavorites] = useState<Location[]>([]);
@@ -85,11 +92,31 @@ const Search = () => {
   const longitude = Number(lng);
 
   useFocusEffect(() => {
+    const themeLoad = async () => {
+      const themeSaved = await AsyncStorage.getItem("theme");
+      const textSaved = await AsyncStorage.getItem("textColor");
+      const subSaved = await AsyncStorage.getItem("subColor");
+      if(themeSaved){
+        setTheme(themeSaved)
+      }
+
+      if (textSaved) {
+        setTextColor(textSaved);
+      }
+
+      if (subSaved){
+        setSubColor(subSaved);
+      }
+
+    };
+
+
     const load = async () => {
       const data = await getAllLocations();
       setLocations(data);
     };
   
+    themeLoad();
     load();
   
     return () => {}; // required cleanup structure
@@ -265,9 +292,9 @@ const Search = () => {
         >
             <Callout tooltip>
               <View style={styles.callout}>
-                <Text style={styles.title}>{location.name}</Text>
+                <Text style={[styles.title, { color: textColor }]}>{location.name}</Text>
                 <Text>{location.description}</Text>
-                <Text style={{ marginTop: 10, color: "blue", fontWeight: '600' }}>
+                <Text style={{ marginTop: 10, fontWeight: '600', color: textColor}}>
                   View Details →
                 </Text>
               </View>
@@ -278,10 +305,10 @@ const Search = () => {
 
       {/* Floating Add Pin Button */}
       <TouchableOpacity
-        style={styles.addButton}
+        style={[styles.addButton, {backgroundColor: subColor}]}
         onPress={() => setModalVisible(true)}
       >
-        <Text style={styles.addButtonText}>+ Add Pin</Text>
+        <Text style={[styles.addButtonText, { color: textColor }]}>+ Add Pin</Text>
       </TouchableOpacity>
 
       {/* Horizontal location list */}
@@ -294,20 +321,20 @@ const Search = () => {
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <TouchableOpacity
-            style={styles.listItem}
+            style={[styles.listItem, { backgroundColor: subColor }]}
             onPress={() => {
               // Zoom the map AND navigate to the dynamic detail route
               zoomToLocation(item);
               router.push(`/details/${item.id}` as any);
             }}
           >
-            <Text style={styles.listTitle} numberOfLines={1}>
+            <Text style={[styles.listTitle, { color: textColor }]} numberOfLines={1}>
               {item.name}
             </Text>
-            <Text style={styles.listDesc} numberOfLines={2}>
+            <Text style={[styles.listDesc, { color: textColor }]} numberOfLines={2}>
               {item.description}
             </Text>
-            <Text style={styles.listHint}>Tap for details →</Text>
+            <Text style={[styles.listHint, {color: textColor}]}>Tap for details →</Text>
           </TouchableOpacity>
         )}
       />
@@ -326,10 +353,10 @@ const Search = () => {
           style={styles.modalOverlay}
           behavior={Platform.OS === "ios" ? "padding" : "height"}
         >
-          <View style={styles.modalCard}>
+          <View style={[styles.modalCard, {backgroundColor: subColor}]}>
             {/* Modal Header */}
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Add New Pin</Text>
+              <Text style={[styles.modalTitle, {color: textColor}]}>Add New Pin</Text>
               <TouchableOpacity
                 onPress={() => {
                   setModalVisible(false);
@@ -341,7 +368,7 @@ const Search = () => {
             </View>
 
             {/* Location Name — controlled TextInput */}
-            <Text style={styles.label}>Location Name *</Text>
+            <Text style={[styles.label, {color: textColor}] }>Location Name *</Text>
             <TextInput
               style={[styles.input, errors.name ? styles.inputError : null]}
               placeholder="e.g. Husk Restaurant"
@@ -354,7 +381,7 @@ const Search = () => {
             ) : null}
 
             {/* Description — controlled TextInput */}
-            <Text style={styles.label}>Description *</Text>
+            <Text style={[styles.label, {color: textColor}]}>Description *</Text>
             <TextInput
               style={[
                 styles.input,
@@ -375,7 +402,7 @@ const Search = () => {
             {/* Lat / Lng row */}
             <View style={styles.coordRow}>
               <View style={styles.coordField}>
-                <Text style={styles.label}>Latitude *</Text>
+                <Text style={[styles.label, {color: textColor}]}>Latitude *</Text>
                 <TextInput
                   style={[
                     styles.input,
@@ -393,7 +420,7 @@ const Search = () => {
               </View>
 
               <View style={styles.coordField}>
-                <Text style={styles.label}>Longitude *</Text>
+                <Text style={[styles.label, {color: textColor}]}>Longitude *</Text>
                 <TextInput
                   style={[
                     styles.input,
@@ -413,10 +440,10 @@ const Search = () => {
 
             {/* Submit */}
             <TouchableOpacity
-              style={styles.submitButton}
+              style={[styles.submitButton, {backgroundColor: theme}]}
               onPress={handleAddLocation}
             >
-              <Text style={styles.submitText}>Add Location</Text>
+              <Text style={[styles.submitText, {color: textColor}]}>Add Location</Text>
             </TouchableOpacity>
           </View>
         </KeyboardAvoidingView>
